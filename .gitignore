@@ -10,3 +10,4 @@ build/
 local.properties
 *.apk
 *.aab
+app/src/androidTest/java/com/infomaniak/mail/utils/Env.kt
