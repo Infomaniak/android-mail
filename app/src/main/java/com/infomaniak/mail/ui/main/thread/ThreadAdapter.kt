@@ -34,9 +34,14 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import androidx.webkit.WebSettingsCompat.*
+import androidx.webkit.WebViewFeature
+import androidx.webkit.WebViewFeature.FORCE_DARK
+import androidx.webkit.WebViewFeature.FORCE_DARK_STRATEGY
 import com.google.android.material.chip.Chip
 import com.infomaniak.lib.core.utils.FormatterFileSize
 import com.infomaniak.lib.core.utils.format
+import com.infomaniak.lib.core.utils.isNightModeEnabled
 import com.infomaniak.mail.R
 import com.infomaniak.mail.data.models.Attachment
 import com.infomaniak.mail.data.models.Recipient
@@ -226,8 +231,22 @@ class ThreadAdapter(
     }
 
     private fun ItemMessageBinding.displayBody(body: Body?) {
-        // TODO: Make prettier webview, Add button to hide / display the conversation inside message body like webapp ?
+        // TODO: Add button to display/hide the conversation inside message's body, like the WebApp?
+
+        setDarkMode()
+
         body?.let { messageBody.loadDataWithBaseURL("", it.value, it.type, "utf-8", "") }
+    }
+
+    @SuppressLint("RequiresFeature")
+    private fun ItemMessageBinding.setDarkMode() {
+        if (WebViewFeature.isFeatureSupported(FORCE_DARK) && WebViewFeature.isFeatureSupported(FORCE_DARK_STRATEGY)) {
+            setForceDarkStrategy(messageBody.settings, DARK_STRATEGY_WEB_THEME_DARKENING_ONLY)
+            setForceDark(
+                messageBody.settings,
+                if (messageBody.resources.isNightModeEnabled()) FORCE_DARK_ON else FORCE_DARK_OFF,
+            )
+        }
     }
 
     private fun Recipient.displayedName(context: Context): String {

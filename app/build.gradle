@@ -57,6 +57,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$rootProject.ext.kotlinx_serialization_version"
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.webkit:webkit:1.4.0'
 
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
