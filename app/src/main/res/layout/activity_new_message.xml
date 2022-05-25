@@ -22,13 +22,94 @@
     android:layout_height="match_parent"
     tools:context=".ui.main.newmessage.NewMessageActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <jp.wasabeef.richeditor.RichEditor
+        android:id="@+id/richEditor"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="NewMessageActivity"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/richEditorPreviewHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/marginStandardMedium"
+        android:layout_marginTop="@dimen/marginStandardMedium"
+        android:text="HTML preview:"
+        app:layout_constraintTop_toBottomOf="@id/richEditor" />
+
+    <TextView
+        android:id="@+id/richEditorPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/marginStandardMedium"
+        app:layout_constraintTop_toBottomOf="@id/richEditorPreviewHeader" />
+
+    <LinearLayout
+        android:id="@+id/formattingToolbar"
+        style="?android:attr/buttonBarStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:windowSoftInputMode="adjustResize"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        tools:visibility="visible">
+
+        <ImageButton
+            android:id="@+id/boldButton"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_format_bold" />
+
+        <ImageButton
+            android:id="@+id/italicButton"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_format_italic" />
+
+        <ImageButton
+            android:id="@+id/underlineButton"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_format_underline" />
+
+        <ImageButton
+            android:id="@+id/textColorButton"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_format_text_color" />
+
+        <ImageButton
+            android:id="@+id/backgroundColorButton"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_format_background_color" />
+
+        <Button
+            android:id="@+id/clearFormattingButton"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Clear"
+            android:textAllCaps="false" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
