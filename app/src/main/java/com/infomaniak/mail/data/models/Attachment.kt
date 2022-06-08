@@ -18,15 +18,12 @@
 package com.infomaniak.mail.data.models
 
 import com.infomaniak.lib.core.utils.Utils.enumValueOfOrNull
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.types.EmbeddedRealmObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// @RealmClass(embedded = true) // TODO: https://github.com/realm/realm-kotlin/issues/551
 @Serializable
-class Attachment : RealmObject {
-    @PrimaryKey // TODO: Remove `@PrimaryKey` when we have EmbeddedObjects
+class Attachment : EmbeddedRealmObject {
     var uuid: String = ""
     @SerialName("mime_type")
     var mimeType: String = ""
@@ -42,16 +39,7 @@ class Attachment : RealmObject {
     var localUri: String = ""
     var thumbnail: String = ""
 
-    // TODO: Remove this method when we have EmbeddedObjects
-    fun initLocalValues(position: Int, parentMessageUid: String) {
-        uuid = "attachment_${position}_${parentMessageUid}"
-    }
-
     fun getDisposition(): AttachmentDisposition? = enumValueOfOrNull<AttachmentDisposition>(disposition)
-
-    override fun equals(other: Any?): Boolean = other is Attachment && other.uuid == uuid
-
-    override fun hashCode(): Int = uuid.hashCode()
 
     enum class AttachmentDisposition {
         INLINE,

@@ -17,29 +17,12 @@
  */
 package com.infomaniak.mail.data.models.message
 
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.types.EmbeddedRealmObject
 import kotlinx.serialization.Serializable
 
-// @RealmClass(embedded = true) // TODO: https://github.com/realm/realm-kotlin/issues/551
 @Serializable
-class Body : RealmObject {
+class Body : EmbeddedRealmObject {
     var value: String = ""
     var type: String = ""
     var subBody: String? = null
-
-    /**
-     * Local
-     */
-    @PrimaryKey
-    var objectId: String = "" // TODO: Remove this when we have EmbeddedObjects
-
-    // TODO: Remove this when we have EmbeddedObjects
-    fun initLocalValues(completedMessageUid: String) {
-        objectId = "body_${completedMessageUid}"
-    }
-
-    override fun equals(other: Any?): Boolean = other is Body && other.objectId == objectId
-
-    override fun hashCode(): Int = objectId.hashCode()
 }

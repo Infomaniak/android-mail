@@ -428,9 +428,10 @@ object MailData {
         Log.d("API", "Folders: Save new data")
         MailRealm.mailboxContent.writeBlocking {
             apiFolders.forEach { apiFolder ->
-                realmFolders?.find { it.id == apiFolder.id }?.threads
-                    ?.mapNotNull(::findLatest)
-                    ?.let { apiFolder.threads = it.toRealmList() }
+                // TODO: Put this back (and make it work)
+                // realmFolders?.find { it.id == apiFolder.id }?.threads
+                //     ?.mapNotNull(::findLatest)
+                //     ?.let { apiFolder.threads = it.toRealmList() }
                 copyToRealm(apiFolder, UpdatePolicy.ALL)
             }
         }
@@ -477,6 +478,7 @@ object MailData {
 
         // Save new data
         Log.d("API", "Threads: Save new data")
+        // TODO: Check if this block still works with Embedded objects.
         val takeLast = apiThreads.size - offset
         if (takeLast > 0) {
             MailRealm.mailboxContent.writeBlocking {
