@@ -35,7 +35,6 @@ import com.infomaniak.lib.core.utils.safeNavigate
 import com.infomaniak.lib.core.views.DividerItemDecorator
 import com.infomaniak.mail.R
 import com.infomaniak.mail.data.MailData
-import com.infomaniak.mail.data.api.MailApi
 import com.infomaniak.mail.data.models.message.Message
 import com.infomaniak.mail.databinding.FragmentThreadBinding
 import com.infomaniak.mail.utils.ModelsUtils.getFormattedThreadSubject
@@ -85,11 +84,7 @@ class ThreadFragment : Fragment() {
                 }
             }
             onDraftClicked = { message ->
-                threadViewModel.viewModelScope.launch(Dispatchers.IO) {
-                    val draft = MailApi.fetchDraft(message.draftResource, message.uid)
-                    message.setDraftId(draft?.uuid)
-                    // TODO: Open the draft in draft editor
-                }
+                // TODO: Open the Draft in draft editor
             }
             onDeleteDraftClicked = { message ->
                 // TODO: Replace MailboxContentController with MailApi one when currentMailbox will be available

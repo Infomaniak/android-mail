@@ -60,19 +60,22 @@ object MailApi {
                 // TODO: Handle if this API call fails
                 ApiRepository.getMessage(realmMessage.resource).data?.also { completedMessage ->
                     completedMessage.apply {
+
                         initLocalValues() // TODO: Remove this when we have EmbeddedObjects
-                        fullyDownloaded = true
+
                         body?.initLocalValues(uid) // TODO: Remove this when we have EmbeddedObjects
+
                         // TODO: Remove this `forEachIndexed` when we have EmbeddedObjects
                         @Suppress("SAFE_CALL_WILL_CHANGE_NULLABILITY", "UNNECESSARY_SAFE_CALL")
                         attachments?.forEachIndexed { index, attachment -> attachment.initLocalValues(index, uid) }
+
+                        if (isDraft) {
+                            val draft = fetchDraft(draftResource, uid)
+                            draftUuid = draft?.uuid
+                        }
+
+                        fullyDownloaded = true
                     }
-                    // TODO: Uncomment this when managing Drafts folder
-                    // if (completedMessage.isDraft && currentFolder.role = Folder.FolderRole.DRAFT) {
-                    //     Log.e("TAG", "fetchMessagesFromApi: ${completedMessage.subject} | ${completedMessage.body?.value}")
-                    //     val draft = fetchDraft(completedMessage.draftResource, completedMessage.uid)
-                    //     completedMessage.draftUuid = draft?.uuid
-                    // }
                 }.let { apiMessage ->
                     if (apiMessage == null) realmMessage to true else apiMessage to false
                 }
