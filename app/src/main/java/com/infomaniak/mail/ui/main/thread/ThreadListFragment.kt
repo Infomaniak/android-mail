@@ -143,13 +143,21 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
             // onEmptyList = { checkIfNoFiles() }
 
             onThreadClicked = {
-                safeNavigate(
+                val destination = if (Folder.isDraftsFolder()) {
+                    val message = it.messages.first()
+                    ThreadListFragmentDirections.actionHomeFragmentToNewMessageActivity(
+                        message.draftUuid,
+                        message.draftResource,
+                        message.uid
+                    )
+                } else {
                     ThreadListFragmentDirections.actionThreadListFragmentToThreadFragment(
                         threadUid = it.uid,
                         threadSubject = it.subject,
                         threadIsFavorite = it.flagged
                     )
-                )
+                }
+                safeNavigate(destination)
             }
         }
     }
@@ -270,7 +278,6 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     }
 
     private fun downloadThreads() {
-
         val folder = MailData.currentFolderFlow.value ?: return
         val mailbox = MailData.currentMailboxFlow.value ?: return
 
