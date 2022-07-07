@@ -114,7 +114,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
 
     override fun onRefresh() {
         currentOffset = OFFSET_FIRST_PAGE
-        viewModel.refreshThreads()
+        viewModel.loadThreadsAfterRefresh()
     }
 
     private fun setupMenuDrawer() {
@@ -143,7 +143,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
             // onEmptyList = { checkIfNoFiles() }
 
             onThreadClicked = {
-                val destination = if (Folder.isDraftsFolder()) {
+                val destination = if (Folder.isDraftsFolder() && it.messages.isNotEmpty()) {
                     val message = it.messages.first()
                     ThreadListFragmentDirections.actionHomeFragmentToNewMessageActivity(
                         message.draftUuid,
@@ -285,7 +285,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
             isDownloadingChanges = true
             currentOffset += PER_PAGE
             showLoadingTimer.start()
-            viewModel.loadThreads(folder, mailbox, mainViewModel.threadDisplayMode, currentOffset)
+            viewModel.loadThreadsAfterPagination(folder, mailbox, currentOffset)
         }
     }
 }
