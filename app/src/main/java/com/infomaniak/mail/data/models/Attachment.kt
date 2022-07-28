@@ -17,11 +17,23 @@
  */
 package com.infomaniak.mail.data.models
 
+import android.util.Log
+import com.infomaniak.lib.core.networking.HttpUtils
 import com.infomaniak.lib.core.utils.Utils.enumValueOfOrNull
+import com.infomaniak.mail.data.api.ApiRoutes
+import com.infomaniak.mail.data.cache.RealmController
+import com.infomaniak.mail.utils.AccountUtils
+import com.infomaniak.mail.utils.KMailHttpClient
+import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import java.io.BufferedInputStream
+import java.io.File
 
 // @RealmClass(embedded = true) // TODO: https://github.com/realm/realm-kotlin/issues/551
 @Serializable
@@ -56,5 +68,36 @@ class Attachment : RealmObject {
     enum class AttachmentDisposition {
         INLINE,
         ATTACHMENT,
+    }
+
+    // TODO: Use this, and move it elsewhere.
+    suspend fun fetchAttachment(attachment: Attachment, cacheDir: File) {
+
+        fun downloadAttachmentData(fileUrl: String, okHttpClient: OkHttpClient): Response {
+            val request = Request.Builder().url(fileUrl).headers(HttpUtils.getHeaders(contentType = null)).get().build()
+            return okHttpClient.newBuilder().build().newCall(request).execute()
+        }
+
+        fun saveAttachmentData(response: Response, outputFile: File, onFinish: (() -> Unit)) {
+            Log.d("TAG", "Save remote data to ${outputFile.path}")
+            BufferedInputStream(response.body?.byteStream()).use { input ->
+                outputFile.outputStream().use { output ->
+                    input.copyTo(output)
+                    onFinish()
+                }
+            }
+        }
+
+        val response = downloadAttachmentData(
+            fileUrl = ApiRoutes.resource(attachment.resource),
+            okHttpClient = KMailHttpClient.getHttpClient(AccountUtils.currentUserId),
+        )
+
+        val file = File(cacheDir, "${attachment.uuid}_${attachment.name}")
+
+        saveAttachmentData(response, file) {
+            attachment.localUri = file.toURI().toString()
+            RealmController.mailboxContent.writeBlocking { copyToRealm(attachment, UpdatePolicy.ALL) }
+        }
     }
 }
