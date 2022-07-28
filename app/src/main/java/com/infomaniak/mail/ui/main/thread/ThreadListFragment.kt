@@ -55,7 +55,6 @@ import com.infomaniak.mail.utils.AccountUtils
 import com.infomaniak.mail.utils.context
 import com.infomaniak.mail.utils.observeNotNull
 import com.infomaniak.mail.utils.toDate
-import com.infomaniak.mail.utils.observeNotNull
 import kotlinx.coroutines.*
 import java.util.*
 
@@ -93,10 +92,6 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
         override fun onDrawerStateChanged(newState: Int) {
             // No-op
         }
-    }
-
-    private companion object {
-        const val OFFSET_TRIGGER = 1
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -153,7 +148,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     }
 
     private fun updateUpdatedAt() = with(binding) {
-        val lastUpdatedAt = MailData.currentFolderFlow.value?.lastUpdatedAt?.toDate() ?: Date(0)
+        val lastUpdatedAt = viewModel.currentFolder.value?.lastUpdatedAt?.toDate() ?: Date(0)
         val ago = when {
             Date(0).time == lastUpdatedAt.time -> ""
             Date().time - lastUpdatedAt.time < DateUtils.MINUTE_IN_MILLIS -> getString(R.string.threadListHeaderLastUpdateNow)
@@ -216,8 +211,6 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     }
 
     private fun setupListeners() = with(binding) {
-        // TODO: Multiselect
-        // openMultiselectButton.setOnClickListener {}
 
         toolbar.setNavigationOnClickListener { drawerLayout?.open() }
 
@@ -267,11 +260,6 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
 
         setupMenuDrawerCallbacks()
 
-        viewModel.currentOffset = OFFSET_FIRST_PAGE
-        binding.unreadCountChip.apply { isCloseIconVisible = isChecked }
-        viewModel.loadMailData()
-    }
-
         with(viewModel) {
             currentFolder.value?.threads?.toList()?.let(::displayThreads)
 
@@ -281,7 +269,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
         }
     }
 
-private fun setupMenuDrawerCallbacks() {
+    private fun setupMenuDrawerCallbacks() {
         val fragmentContainer = (activity as? MainActivity)?.binding?.menuDrawerFragment ?: return
         (fragmentContainer.getFragment() as? MenuDrawerFragment)
             ?.apply {
@@ -302,17 +290,6 @@ private fun setupMenuDrawerCallbacks() {
         viewModel.listenToCurrentFolder()
     }
 
-    private fun resetList() {
-        clearFilter()
-        scrollToTop()
-    }
-
-    private fun clearFilter() = with(binding.unreadCountChip) {
-        viewModel.filter = null
-        isChecked = false
-        isCloseIconVisible = false
-    }
-
     private fun onMailboxChange(mailbox: Mailbox) = with(viewModel) {
         if (mailbox.objectId != lastMailboxId) resetList()
         lastMailboxId = mailbox.objectId
@@ -328,8 +305,8 @@ private fun setupMenuDrawerCallbacks() {
         val folderName = folder.getLocalizedName(binding.context)
         Log.i("UI", "Received folder name (${folderName})")
         binding.toolbar.title = folderName
-        updateUpdatedAt()
         updateUnreadCount(folder.unreadCount)
+        updateUpdatedAt()
     }
 
     private fun listenToThreads() {
@@ -364,6 +341,16 @@ private fun setupMenuDrawerCallbacks() {
         drawerLayout?.let { drawer -> menuDrawerNavigation?.let(drawer::closeDrawer) }
     }
 
+    private fun resetList() {
+        clearFilter()
+        scrollToTop()
+    }
+
+    private fun clearFilter() = with(binding.unreadCountChip) {
+        viewModel.filter = null
+        isChecked = false
+        isCloseIconVisible = false
+    }
 
     private fun scrollToTop() {
         binding.threadsList.layoutManager?.scrollToPosition(0)
@@ -371,8 +358,8 @@ private fun setupMenuDrawerCallbacks() {
 
     private fun downloadThreads() = with(viewModel) {
 
-        val folder = MailData.currentFolderFlow.value ?: return
-        val mailbox = MailData.currentMailboxFlow.value ?: return
+        val folder = viewModel.currentFolder.value ?: return
+        val mailbox = viewModel.currentMailbox.value ?: return
 
         if (folder.totalCount > currentOffset + PER_PAGE) {
             isDownloadingChanges = true
@@ -380,5 +367,9 @@ private fun setupMenuDrawerCallbacks() {
             showLoadingTimer.start()
             viewModel.loadThreads(folder, mailbox, currentOffset)
         }
+    }
+
+    private companion object {
+        const val OFFSET_TRIGGER = 1
     }
 }
