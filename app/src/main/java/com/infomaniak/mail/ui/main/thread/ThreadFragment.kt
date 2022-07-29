@@ -109,7 +109,7 @@ class ThreadFragment : Fragment() {
 
     private fun listenToMessages() {
         viewModel.messages.observeNotNull(this, ::displayMessages)
-        viewModel.loadMessages(navigationArgs.threadUid)
+        viewModel.listenToThread(navigationArgs.threadUid)
     }
 
     private fun displayMessages(messages: List<Message>) {
