@@ -19,11 +19,16 @@
 
 package com.infomaniak.mail.data.models.thread
 
+import android.content.Context
+import androidx.core.text.buildSpannedString
+import androidx.core.text.color
 import com.infomaniak.lib.core.utils.*
+import com.infomaniak.mail.R
 import com.infomaniak.mail.data.api.RealmInstantSerializer
 import com.infomaniak.mail.data.api.RealmListSerializer
 import com.infomaniak.mail.data.models.Recipient
 import com.infomaniak.mail.data.models.message.Message
+import com.infomaniak.mail.utils.displayedName
 import com.infomaniak.mail.utils.isToday
 import com.infomaniak.mail.utils.toDate
 import io.realm.kotlin.ext.realmListOf
@@ -86,17 +91,29 @@ class Thread : RealmObject {
 
         // TODO: When do we want to update this value? This is a quick fix. The date will
         // TODO: only update when we get data from the API. We probably don't want that.
-        displayedDate = formatDate(date?.toDate() ?: Date(0))
+        displayedDate = date?.toDate()?.formatDate() ?: ""
 
         return this
     }
 
-    private fun formatDate(date: Date): String = with(date) {
-        when {
+    private fun Date.formatDate(): String {
+        return when {
             isToday() -> format(FORMAT_DATE_HOUR_MINUTE)
             year() == Date().year() -> format(FORMAT_DATE_SHORT_DAY_ONE_CHAR)
             else -> format(FORMAT_DATE_CLEAR_MONTH_DAY_ONE_CHAR)
         }
+    }
+
+    fun formatExpeditorField(context: Context): CharSequence {
+        return buildSpannedString {
+            if (hasDrafts) {
+                color(context.getColor(R.color.draftTextColor)) {
+                    append("(${context.getString(R.string.messageIsDraftOption)}) ")
+                }
+            }
+            val recipients = if (hasDrafts) to else from
+            recipients.forEach { append("${it.displayedName(context)}, ") }
+        }.removeSuffix(", ")
     }
 
     // enum class ThreadFilter(@IdRes val filterNameRes: Int) {
@@ -106,5 +123,24 @@ class Thread : RealmObject {
         UNSEEN("Unseen"),
         STARRED("Starred"),
         UNSTARRED("Unstarred"),
+    }
+
+    companion object {
+        fun from(message: Message, threadUid: String?) = Thread().apply {
+            uid = threadUid ?: message.uid
+            from = message.from
+            to = message.to
+            bcc = message.bcc
+            cc = message.cc
+            hasDrafts = true
+            hasAttachments = message.hasAttachments
+            messages = realmListOf(message)
+            subject = message.subject
+            date = message.date
+            messagesCount = 1
+            size = message.attachments.size
+            flagged = message.flagged
+            displayedDate = message.date?.toDate()?.formatDate() ?: ""
+        }
     }
 }

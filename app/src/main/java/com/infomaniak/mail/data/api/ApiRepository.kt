@@ -23,6 +23,8 @@ import com.infomaniak.lib.core.utils.ApiController
 import com.infomaniak.lib.core.utils.ApiController.ApiMethod.*
 import com.infomaniak.mail.data.models.*
 import com.infomaniak.mail.data.models.addressBook.AddressBooksResult
+import com.infomaniak.mail.data.models.drafts.Draft
+import com.infomaniak.mail.data.models.drafts.DraftSaveResult
 import com.infomaniak.mail.data.models.message.Message
 import com.infomaniak.mail.data.models.signature.SignaturesResult
 import com.infomaniak.mail.data.models.thread.Thread.ThreadFilter
@@ -80,8 +82,14 @@ object ApiRepository : ApiRepositoryCore() {
 
     // fun deleteFolder(mailboxUuid: String, folderId: String): ApiResponse<Boolean> = callKotlinxApi(ApiRoutes.folder(mailboxUuid, folderId), DELETE)
 
-    fun getThreads(mailboxUuid: String, folderId: String, offset: Int, filter: ThreadFilter? = null): ApiResponse<ThreadsResult> {
-        return callKotlinxApi(ApiRoutes.threads(mailboxUuid, folderId, offset, filter?.name), GET)
+    fun getThreads(
+        mailboxUuid: String,
+        folderId: String,
+        offset: Int,
+        filter: ThreadFilter? = null,
+        isDraftsFolder: Boolean
+    ): ApiResponse<ThreadsResult> {
+        return callKotlinxApi(ApiRoutes.threads(mailboxUuid, folderId, offset, filter?.name, isDraftsFolder), GET)
     }
 
     fun getMessage(messageResource: String): ApiResponse<Message> {
@@ -104,20 +112,20 @@ object ApiRepository : ApiRepositoryCore() {
 
     // fun trustSender(messageResource: String): ApiRe sponse<EmptyResponse> = callKotlinxApi(ApiRoutes.resource("$messageResource/trustForm"), POST)
 
-    fun saveDraft(mailboxUuid: String, draft: Draft): ApiResponse<Draft> {
-        val body = Json.encodeToString(draft)
-        fun postDraft(): ApiResponse<Draft> = callKotlinxApi(ApiRoutes.draft(mailboxUuid), POST, body)
-        fun putDraft(): ApiResponse<Draft> = callKotlinxApi(ApiRoutes.draft(mailboxUuid, draft.uuid), PUT, body)
+    fun saveDraft(mailboxUuid: String, draft: Draft): ApiResponse<DraftSaveResult> {
+        val body = Json.encodeToString(draft).replace("[]", "null")
+        fun postDraft(): ApiResponse<DraftSaveResult> = callKotlinxApi(ApiRoutes.draft(mailboxUuid), POST, body)
+        fun putDraft(): ApiResponse<DraftSaveResult> = callKotlinxApi(ApiRoutes.draft(mailboxUuid, draft.uuid), PUT, body)
 
-        return if (draft.hasLocalUuid()) postDraft() else putDraft()
+        return if (draft.isOffline) postDraft() else putDraft()
     }
 
     fun sendDraft(mailboxUuid: String, draft: Draft): ApiResponse<Boolean> {
-        val body = Json.encodeToString(draft)
+        val body = Json.encodeToString(draft).replace("[]", "null")
         fun postDraft(): ApiResponse<Boolean> = callKotlinxApi(ApiRoutes.draft(mailboxUuid), POST, body)
         fun putDraft(): ApiResponse<Boolean> = callKotlinxApi(ApiRoutes.draft(mailboxUuid, draft.uuid), PUT, body)
 
-        return if (draft.hasLocalUuid()) postDraft() else putDraft()
+        return if (draft.isOffline) postDraft() else putDraft()
     }
 
     fun deleteDraft(draftResource: String): ApiResponse<EmptyResponse?> {
@@ -149,6 +157,10 @@ object ApiRepository : ApiRepositoryCore() {
     // }
 
     fun getDraft(messageDraftResource: String): ApiResponse<Draft> = callKotlinxApi(ApiRoutes.resource(messageDraftResource), GET)
+
+    fun getDraft(mailboxUuid: String, draftUuid: String): ApiResponse<Draft> {
+        return callKotlinxApi(ApiRoutes.draft(mailboxUuid, draftUuid), GET)
+    }
 
     fun starMessage(star: Boolean, mailboxUuid: String, messageIds: List<String>): ApiResponse<StarMessageResult> {
         return callKotlinxApi(ApiRoutes.starMessage(mailboxUuid, star), POST, mapOf("uids" to messageIds))

@@ -30,18 +30,20 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.RecyclerView
+import com.infomaniak.lib.core.utils.SnackbarUtils.showSnackbar
 import com.infomaniak.lib.core.utils.safeNavigate
 import com.infomaniak.lib.core.views.DividerItemDecorator
 import com.infomaniak.mail.R
 import com.infomaniak.mail.data.MailData
-import com.infomaniak.mail.data.api.MailApi
 import com.infomaniak.mail.data.models.message.Message
 import com.infomaniak.mail.databinding.FragmentThreadBinding
 import com.infomaniak.mail.utils.ModelsUtils.getFormattedThreadSubject
 import com.infomaniak.mail.utils.context
 import com.infomaniak.mail.utils.observeNotNull
+import com.infomaniak.mail.utils.openMessageEdition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.infomaniak.lib.core.R as RCore
 
 class ThreadFragment : Fragment() {
 
@@ -82,19 +84,22 @@ class ThreadFragment : Fragment() {
                 }
             }
             onDraftClicked = { message ->
-                lifecycleScope.launch {
-                    val draft = MailApi.fetchDraft(message.draftResource, message.uid)
-                    message.setDraftId(draft?.uuid)
-                    // TODO: Open the draft in draft editor
+                lifecycleScope.launch(Dispatchers.IO) {
+                    activity?.runOnUiThread { openMessageEdition(R.id.action_threadFragment_to_newMessageActivity, message) }
                 }
             }
             onDeleteDraftClicked = { message ->
-                // TODO: Replace MailboxContentController with MailApi one when currentMailbox will be available
-                lifecycleScope.launch(Dispatchers.IO) {
-                    MailData.deleteDraft(message)
-                    // TODO: Delete Body & Attachments too. When they'll be EmbeddedObject, they should delete by themself automatically.
+                val isInternetAvailable = true // TODO: Manage this for real
+                if (!isInternetAvailable) {
+                    val position = threadAdapter.removeMessage(message)
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        if (!MailData.deleteDraft(message)) {
+                            threadAdapter.insertMessage(position, message)
+                            showSnackbar(RCore.string.anErrorHasOccurred) // TODO: Add real error message
+                        }
+                        // TODO: Delete Body & Attachments too. When they'll be EmbeddedObject, they should delete by themself automatically.
+                    }
                 }
-                threadAdapter.removeMessage(message)
             }
         }
     }

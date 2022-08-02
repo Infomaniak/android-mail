@@ -21,8 +21,12 @@ import android.util.Log
 import com.infomaniak.lib.core.networking.HttpUtils
 import com.infomaniak.mail.data.cache.MailRealm
 import com.infomaniak.mail.data.cache.MailboxContentController
-import com.infomaniak.mail.data.models.*
+import com.infomaniak.mail.data.models.Attachment
+import com.infomaniak.mail.data.models.Contact
+import com.infomaniak.mail.data.models.Folder
+import com.infomaniak.mail.data.models.Mailbox
 import com.infomaniak.mail.data.models.addressBook.AddressBook
+import com.infomaniak.mail.data.models.drafts.Draft
 import com.infomaniak.mail.data.models.message.Message
 import com.infomaniak.mail.data.models.thread.Thread
 import com.infomaniak.mail.utils.AccountUtils
@@ -51,8 +55,10 @@ object MailApi {
         return ApiRepository.getFolders(mailbox.uuid).data
     }
 
-    fun fetchThreads(folder: Folder, mailboxUuid: String, offset: Int): List<Thread>? {
-        return ApiRepository.getThreads(mailboxUuid, folder.id, offset).data?.threads?.map { it.initLocalValues() }
+    fun fetchThreads(folder: Folder, mailboxUuid: String, offset: Int, isDraftsFolder: Boolean): List<Thread>? {
+        return ApiRepository.getThreads(mailboxUuid, folder.id, offset, isDraftsFolder = isDraftsFolder).data?.threads?.map {
+            it.initLocalValues()
+        }
     }
 
     fun fetchMessages(thread: Thread): List<Message> {
@@ -64,18 +70,14 @@ object MailApi {
                 ApiRepository.getMessage(realmMessage.resource).data?.also { completedMessage ->
                     completedMessage.apply {
                         initLocalValues() // TODO: Remove this when we have EmbeddedObjects
-                        fullyDownloaded = true
                         body?.initLocalValues(uid) // TODO: Remove this when we have EmbeddedObjects
                         // TODO: Remove this `forEachIndexed` when we have EmbeddedObjects
                         @Suppress("SAFE_CALL_WILL_CHANGE_NULLABILITY", "UNNECESSARY_SAFE_CALL")
                         attachments?.forEachIndexed { index, attachment -> attachment.initLocalValues(index, uid) }
+
+                        if (isDraft) fetchDraft(draftResource, uid)
+                        fullyDownloaded = true
                     }
-                    // TODO: Uncomment this when managing Drafts folder
-                    // if (completedMessage.isDraft && currentFolder.role = Folder.FolderRole.DRAFT) {
-                    //     Log.e("TAG", "fetchMessagesFromApi: ${completedMessage.subject} | ${completedMessage.body?.value}")
-                    //     val draft = fetchDraft(completedMessage.draftResource, completedMessage.uid)
-                    //     completedMessage.draftUuid = draft?.uuid
-                    // }
                 }.let { apiMessage ->
                     apiMessage ?: realmMessage
                 }

@@ -101,7 +101,7 @@ class ThreadListAdapter(private var itemsList: MutableList<Any> = mutableListOf(
     }
 
     private fun CardviewThreadItemBinding.displayThread(position: Int) = with(itemsList[position] as Thread) {
-        expeditor.text = from.first().run { if (name.isNullOrEmpty()) email else name }
+        expeditor.text = formatExpeditorField(context)
         mailSubject.text = subject.getFormattedThreadSubject(context)
 
         mailDate.text = displayedDate

@@ -18,19 +18,25 @@
 package com.infomaniak.mail.utils
 
 import android.content.Context
+import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.IdRes
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import androidx.viewbinding.ViewBinding
 import com.infomaniak.lib.core.utils.SnackbarUtils.showSnackbar
 import com.infomaniak.lib.core.utils.day
 import com.infomaniak.lib.core.utils.month
+import com.infomaniak.lib.core.utils.safeNavigate
 import com.infomaniak.lib.core.utils.year
 import com.infomaniak.mail.R
+import com.infomaniak.mail.data.models.Recipient
+import com.infomaniak.mail.data.models.message.Message
 import io.realm.kotlin.types.RealmInstant
 import java.util.*
 
@@ -73,6 +79,30 @@ fun <T> LiveData<T?>.observeNotNull(owner: LifecycleOwner, observer: (t: T) -> U
     observe(owner) { it?.let(observer) }
 }
 
+fun Recipient.displayedName(context: Context): String {
+    return if (AccountUtils.currentUser?.email == email) context.getString(R.string.contactMe) else getNameOrEmail()
+}
+
+fun Recipient.getNameOrEmail() = name?.ifBlank { email } ?: email
+
+fun <T> LiveData<T>.observeOnce(lifecycleOwner: LifecycleOwner, observer: Observer<T>) {
+    observe(lifecycleOwner, object : Observer<T> {
+        override fun onChanged(t: T?) {
+            observer.onChanged(t)
+            removeObserver(this)
+        }
+    })
+}
+
 fun Fragment.notYetImplemented() {
     showSnackbar("This feature is currently under development.")
+}
+
+fun Fragment.openMessageEdition(@IdRes direction: Int, message: Message? = null) {
+    val args = Bundle().apply {
+        putCharSequence("draftUuid", message?.draftUuid)
+        putCharSequence("draftResource", message?.draftResource)
+        putCharSequence("messageUid", message?.uid)
+    }
+    safeNavigate(direction, args)
 }

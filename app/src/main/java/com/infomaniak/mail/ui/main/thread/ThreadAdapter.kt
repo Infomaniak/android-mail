@@ -19,7 +19,6 @@ package com.infomaniak.mail.ui.main.thread
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.text.Html
 import android.text.SpannedString
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -43,8 +42,8 @@ import com.infomaniak.mail.data.models.Recipient
 import com.infomaniak.mail.data.models.message.Body
 import com.infomaniak.mail.data.models.message.Message
 import com.infomaniak.mail.databinding.ItemMessageBinding
-import com.infomaniak.mail.utils.AccountUtils
 import com.infomaniak.mail.utils.context
+import com.infomaniak.mail.utils.displayedName
 import com.infomaniak.mail.utils.toDate
 import com.infomaniak.mail.utils.toggleChevron
 import com.infomaniak.lib.core.R as RCore
@@ -81,10 +80,19 @@ class ThreadAdapter(
         displayMessage(message)
     }
 
-    fun removeMessage(message: Message) {
+    fun insertMessage(index: Int, message: Message) {
+        messageList.add(index, message)
+        notifyItemInserted(index)
+    }
+
+    fun removeMessage(message: Message): Int {
         val position = messageList.indexOf(message)
-        messageList.removeAt(position)
-        notifyItemRemoved(position)
+        if (position != -1) {
+            messageList.removeAt(position)
+            notifyItemRemoved(position)
+        }
+
+        return position
     }
 
     fun notifyAdapter(newList: MutableList<Message>) {
@@ -122,7 +130,7 @@ class ThreadAdapter(
 
         expandHeaderButton.isVisible = isExpanded
         webViewFrameLayout.isVisible = isExpanded
-        recipient.text = if (isExpanded) formatRecipientsName(message) else Html.fromHtml(preview, Html.FROM_HTML_MODE_LEGACY)
+        recipient.text = if (isExpanded) formatRecipientsName(message) else subject
         expeditorEmail.text = if (isExpanded) from.first().email else ""
 
         if (isExpanded) {
@@ -231,12 +239,6 @@ class ThreadAdapter(
         // TODO: Make prettier webview, Add button to hide / display the conversation inside message body like webapp ?
         body?.let { messageBody.loadDataWithBaseURL("", it.value, it.type, "utf-8", "") }
     }
-
-    private fun Recipient.displayedName(context: Context): String {
-        return if (AccountUtils.currentUser?.email == email) context.getString(R.string.contactMe) else getNameOrEmail()
-    }
-
-    private fun Recipient.getNameOrEmail() = name?.ifBlank { email } ?: email
 
     private class MessageListDiffCallback(
         private val oldList: List<Message>,

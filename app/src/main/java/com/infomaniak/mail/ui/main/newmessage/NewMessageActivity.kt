@@ -21,19 +21,20 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.navArgs
 import com.google.android.material.button.MaterialButton
 import com.infomaniak.mail.R
-import com.infomaniak.mail.data.models.Draft
-import com.infomaniak.mail.data.models.MessagePriority
-import com.infomaniak.mail.data.models.MessagePriority.getPriority
-import com.infomaniak.mail.data.models.Recipient
+import com.infomaniak.mail.data.models.drafts.Draft.DraftAction
 import com.infomaniak.mail.databinding.ActivityNewMessageBinding
 import com.infomaniak.mail.ui.main.ThemedActivity
 import com.infomaniak.mail.ui.main.newmessage.NewMessageActivity.EditorAction.*
-import io.realm.kotlin.ext.realmListOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class NewMessageActivity : ThemedActivity() {
 
+    private val navigationArgs: NewMessageActivityArgs by navArgs()
     private val viewModel: NewMessageViewModel by viewModels()
 
     private val binding: ActivityNewMessageBinding by lazy { ActivityNewMessageBinding.inflate(layoutInflater) }
@@ -50,12 +51,10 @@ class NewMessageActivity : ThemedActivity() {
         binding.apply {
             setContentView(root)
 
-            toolbar.setNavigationOnClickListener {
-                sendMail(Draft.DraftAction.SAVE)
-                onBackPressed()
-            }
+            toolbar.setNavigationOnClickListener { closeDraft() }
+
             toolbar.setOnMenuItemClickListener {
-                if (sendMail(Draft.DraftAction.SEND)) finish()
+                if (sendMail(DraftAction.SEND)) finish()
                 true
             }
 
@@ -72,6 +71,8 @@ class NewMessageActivity : ThemedActivity() {
 
             handleEditorToggle()
         }
+
+        with(navigationArgs) { viewModel.setup(this@NewMessageActivity, draftResource, draftUuid, messageUid) }
     }
 
     private fun ActivityNewMessageBinding.handleEditorToggle() {
@@ -98,22 +99,27 @@ class NewMessageActivity : ThemedActivity() {
         view.setOnClickListener { viewModel.editorAction.value = action }
     }
 
-    private fun createDraft() = with(newMessageFragment) {
-        Draft().apply {
-            initLocalValues("")
-            // TODO: should userInformation (here 'from') be stored in mainViewModel ? see ApiRepository.getUser()
-            from = realmListOf(Recipient().apply { email = getFromMailbox().email })
-            subject = getSubject()
-            body = getBody()
-            priority = MessagePriority.Priority.NORMAL.getPriority()
-        }
+    fun closeDraft() {
+        sendMail(DraftAction.SAVE)
+        finish()
     }
 
-    private fun sendMail(action: Draft.DraftAction): Boolean {
-        if (viewModel.recipients.isEmpty()) return false
-        viewModel.sendMail(createDraft(), action)
+    fun sendMail(action: DraftAction) = with(viewModel) {
+        if (action == DraftAction.SAVE && hasStartedEditing.value == false ||
+            action == DraftAction.SEND && newMessageTo.isEmpty()
+        ) return false
 
-        return true
+        currentDraft.value?.let { draft ->
+            draft.fill(
+                draftAction = action,
+                messageEmail = newMessageFragment.getFromMailbox().email,
+                messageSubject = newMessageFragment.getSubject(),
+                messageBody = newMessageFragment.getBody(),
+            )
+            lifecycleScope.launch(Dispatchers.IO) { sendMail(draft) }
+        }
+
+        true
     }
 
     fun toggleEditor(isVisible: Boolean) {

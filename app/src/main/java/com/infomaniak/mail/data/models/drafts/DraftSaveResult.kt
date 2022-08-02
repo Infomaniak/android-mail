@@ -15,14 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.infomaniak.mail.ui.main
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import com.infomaniak.mail.data.models.user.UserPreferences.ThreadMode
+package com.infomaniak.mail.data.models.drafts
 
-class MainViewModel : ViewModel() {
+import com.infomaniak.mail.data.models.Attachment
+import kotlinx.serialization.Serializable
 
-    val isInternetAvailable = MutableLiveData(false)
-    var threadDisplayMode = ThreadMode.THREADS
-}
+@Serializable
+data class DraftSaveResult(
+    val uuid: String,
+    val uid: String,
+    val attachments: List<Attachment>,
+)

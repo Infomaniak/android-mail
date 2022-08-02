@@ -22,10 +22,11 @@ package com.infomaniak.mail.data.models.message
 import com.infomaniak.lib.core.utils.Utils.enumValueOfOrNull
 import com.infomaniak.mail.data.api.RealmInstantSerializer
 import com.infomaniak.mail.data.api.RealmListSerializer
-import com.infomaniak.mail.data.cache.MailRealm
-import com.infomaniak.mail.data.cache.MailboxContentController.getLatestMessage
 import com.infomaniak.mail.data.models.Attachment
+import com.infomaniak.mail.data.models.Folder.Companion.API_DRAFT_FOLDER_NAME
+import com.infomaniak.mail.data.models.Folder.Companion.getDraftsFolder
 import com.infomaniak.mail.data.models.Recipient
+import com.infomaniak.mail.data.models.drafts.Draft
 import com.infomaniak.mail.data.models.thread.Thread
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
@@ -100,6 +101,7 @@ class Message : RealmObject {
     var isExpandedHeaderMode = false
 
     fun initLocalValues(): Message {
+        draftUuid = draftResource.substringAfter("/draft/")
         from = from.map { it.initLocalValues() }.toRealmList() // TODO: Remove this when we have EmbeddedObjects
         cc = cc.map { it.initLocalValues() }.toRealmList() // TODO: Remove this when we have EmbeddedObjects
         bcc = bcc.map { it.initLocalValues() }.toRealmList() // TODO: Remove this when we have EmbeddedObjects
@@ -109,15 +111,30 @@ class Message : RealmObject {
         return this
     }
 
-    fun setDraftId(draftUuid: String?) {
-        MailRealm.mailboxContent.writeBlocking { getLatestMessage(uid)?.draftUuid = draftUuid }
-    }
-
     fun getDkimStatus(): MessageDKIM? = enumValueOfOrNull<MessageDKIM>(dkimStatus)
 
     enum class MessageDKIM(val value: String?) {
         VALID(null),
         NOT_VALID("not_valid"),
         NOT_SIGNED("not_signed"),
+    }
+
+    companion object {
+        fun from(draft: Draft) = Message().apply {
+            uid = draft.parentMessageUid.ifEmpty { draft.uuid }
+            draftUuid = draft.uuid
+            subject = draft.subject
+            folder = API_DRAFT_FOLDER_NAME
+            folderId = getDraftsFolder()?.id.toString()
+            from = draft.from
+            to = draft.to ?: realmListOf()
+            cc = draft.cc ?: realmListOf()
+            bcc = draft.bcc ?: realmListOf()
+            replyTo = draft.replyTo
+            isDraft = true
+            attachments = draft.attachments
+            hasAttachments = draft.attachments.isNotEmpty()
+            date = draft.date
+        }
     }
 }

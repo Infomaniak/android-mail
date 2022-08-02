@@ -15,27 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-@file:UseSerializers(RealmListSerializer::class)
+@file:UseSerializers(RealmListSerializer::class, RealmInstantSerializer::class)
 
-package com.infomaniak.mail.data.models
+package com.infomaniak.mail.data.models.drafts
 
+import com.infomaniak.mail.data.api.RealmInstantSerializer
 import com.infomaniak.mail.data.api.RealmListSerializer
+import com.infomaniak.mail.data.models.Attachment
+import com.infomaniak.mail.data.models.Recipient
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.UseSerializers
+import java.util.*
 
 @Serializable
 class Draft : RealmObject {
     @PrimaryKey
     var uuid: String = ""
+    var date: RealmInstant? = null
     @SerialName("identity_id")
     var identityId: Int? = null
-    var resource: String? = null
     @SerialName("in_reply_to_uid")
     var inReplyToUid: String? = null
     @SerialName("forwarded_uid")
@@ -47,12 +53,12 @@ class Draft : RealmObject {
     @SerialName("in_reply_to")
     var inReplyTo: String? = null
     @SerialName("mime_type")
-    var mimeType: String = "any/any"
+    var mimeType: String = "text/html"
     var body: String = ""
     var cc: RealmList<Recipient>? = null
     var bcc: RealmList<Recipient>? = null
     var from: RealmList<Recipient> = realmListOf()
-    var to: RealmList<Recipient> = realmListOf()
+    var to: RealmList<Recipient>? = null
     var subject: String = ""
     @SerialName("ack_request")
     var ackRequest: Boolean = false
@@ -67,20 +73,28 @@ class Draft : RealmObject {
      * Local
      */
     var parentMessageUid: String = ""
+    @Transient
+    var isOffline: Boolean = false
+    @Transient
+    var isModifiedOffline: Boolean = false
 
-    fun initLocalValues(messageUid: String) {
-        if (uuid.isEmpty()) uuid = "${OFFLINE_DRAFT_UUID_PREFIX}_${messageUid}"
+    fun initLocalValues(messageUid: String = "") {
+
+        if (uuid.isEmpty()) {
+            uuid = "${OFFLINE_DRAFT_UUID_PREFIX}_${UUID.randomUUID()}"
+            isOffline = true
+        }
+
         parentMessageUid = messageUid
 
         cc = cc?.map { it.initLocalValues() }?.toRealmList() // TODO: Remove this when we have EmbeddedObjects
         bcc = bcc?.map { it.initLocalValues() }?.toRealmList() // TODO: Remove this when we have EmbeddedObjects
-        to = to.map { it.initLocalValues() }.toRealmList() // TODO: Remove this when we have EmbeddedObjects
+        to = to?.map { it.initLocalValues() }?.toRealmList() // TODO: Remove this when we have EmbeddedObjects
     }
 
-    fun hasLocalUuid() = uuid.startsWith(OFFLINE_DRAFT_UUID_PREFIX)
-
-    enum class DraftAction {
-        SEND, SAVE
+    enum class DraftAction(val apiName: String) {
+        SEND("send"),
+        SAVE("save")
     }
 
     companion object {

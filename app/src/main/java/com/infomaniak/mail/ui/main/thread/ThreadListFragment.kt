@@ -37,6 +37,7 @@ import com.infomaniak.lib.core.utils.Utils
 import com.infomaniak.lib.core.utils.loadAvatar
 import com.infomaniak.lib.core.utils.safeNavigate
 import com.infomaniak.lib.core.utils.setPagination
+import com.infomaniak.mail.R
 import com.infomaniak.mail.data.MailData
 import com.infomaniak.mail.data.api.ApiRepository.OFFSET_FIRST_PAGE
 import com.infomaniak.mail.data.api.ApiRepository.PER_PAGE
@@ -49,6 +50,7 @@ import com.infomaniak.mail.ui.main.menu.MenuDrawerFragment
 import com.infomaniak.mail.utils.AccountUtils
 import com.infomaniak.mail.utils.context
 import com.infomaniak.mail.utils.observeNotNull
+import com.infomaniak.mail.utils.openMessageEdition
 
 class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
 
@@ -114,7 +116,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
 
     override fun onRefresh() {
         currentOffset = OFFSET_FIRST_PAGE
-        viewModel.refreshThreads()
+        viewModel.loadThreadsAfterRefresh()
     }
 
     private fun setupMenuDrawer() {
@@ -143,13 +145,19 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
             // onEmptyList = { checkIfNoFiles() }
 
             onThreadClicked = {
-                safeNavigate(
-                    ThreadListFragmentDirections.actionThreadListFragmentToThreadFragment(
-                        threadUid = it.uid,
-                        threadSubject = it.subject,
-                        threadIsFavorite = it.flagged
+                if (Folder.isDraftsFolder()) {
+                    if (it.messages.isNotEmpty()) {
+                        openMessageEdition(R.id.action_threadListFragment_to_newMessageActivity, it.messages.first())
+                    }
+                } else {
+                    safeNavigate(
+                        ThreadListFragmentDirections.actionThreadListFragmentToThreadFragment(
+                            threadUid = it.uid,
+                            threadSubject = it.subject,
+                            threadIsFavorite = it.flagged
+                        )
                     )
-                )
+                }
             }
         }
     }
@@ -175,7 +183,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
         }
 
         newMessageFab.setOnClickListener {
-            safeNavigate(ThreadListFragmentDirections.actionHomeFragmentToNewMessageActivity())
+            safeNavigate(ThreadListFragmentDirections.actionThreadListFragmentToNewMessageActivity())
         }
 
         threadsList.setPagination(
@@ -270,7 +278,6 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     }
 
     private fun downloadThreads() {
-
         val folder = MailData.currentFolderFlow.value ?: return
         val mailbox = MailData.currentMailboxFlow.value ?: return
 
@@ -278,7 +285,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
             isDownloadingChanges = true
             currentOffset += PER_PAGE
             showLoadingTimer.start()
-            viewModel.loadThreads(folder, mailbox, currentOffset)
+            viewModel.loadThreadsAfterPagination(folder, mailbox, currentOffset)
         }
     }
 }

@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.infomaniak.lib.core.utils.SingleLiveEvent
 import com.infomaniak.mail.data.MailData
+import com.infomaniak.mail.data.api.ApiRepository
 import com.infomaniak.mail.data.models.Folder
 import com.infomaniak.mail.data.models.Mailbox
 import com.infomaniak.mail.data.models.thread.Thread
@@ -57,14 +58,16 @@ class ThreadListViewModel : ViewModel() {
         MailData.loadInboxContent()
     }
 
-    fun loadThreads(folder: Folder, mailbox: Mailbox, offset: Int) {
+    fun loadThreadsAfterPagination(folder: Folder, mailbox: Mailbox, offset: Int) {
         MailData.loadThreads(folder, mailbox, offset)
     }
 
-    fun refreshThreads() {
-        MailData.refreshThreads(
+    fun loadThreadsAfterRefresh() {
+        MailData.loadThreads(
             folder = MailData.currentFolderFlow.value ?: return,
             mailbox = MailData.currentMailboxFlow.value ?: return,
+            offset = ApiRepository.OFFSET_FIRST_PAGE,
+            forceRefresh = true,
         )
     }
 }
