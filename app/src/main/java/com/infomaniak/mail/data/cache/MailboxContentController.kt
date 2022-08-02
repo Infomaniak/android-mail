@@ -153,9 +153,9 @@ object MailboxContentController {
         MailRealm.mailboxContent.writeBlocking { messages.forEach { copyToRealm(it, UpdatePolicy.ALL) } }
     }
 
-    // fun updateMessage(uid: String, onUpdate: (message: Message) -> Unit) {
-    //     MailRealm.mailboxContent.writeBlocking { getLatestMessage(uid)?.let(onUpdate) }
-    // }
+    fun updateMessage(uid: String, onUpdate: (message: Message) -> Unit) {
+        MailRealm.mailboxContent.writeBlocking { getLatestMessage(uid)?.let(onUpdate) }
+    }
 
     fun MutableRealm.deleteLatestMessage(uid: String) {
         getLatestMessage(uid)?.apply {
@@ -180,6 +180,8 @@ object MailboxContentController {
         return MailRealm.mailboxContent.query<Draft>("${Draft::uuid.name} == '$uuid'").first().find()
     }
 
+    private fun MutableRealm.getLatestDraft(draft: Draft) = if (draft.isManaged()) getLatestDraft(draft.uuid) else draft
+
     private fun MutableRealm.getLatestDraft(uuid: String): Draft? = getDraft(uuid)?.let(::findLatest)
 
     fun upsertDraft(draft: Draft) {
@@ -188,16 +190,18 @@ object MailboxContentController {
 
     fun updateDraft(draft: Draft, onUpdate: (draft: Draft) -> Unit): Draft {
         return MailRealm.mailboxContent.writeBlocking {
-            val hotDraft = if (draft.isManaged()) getLatestDraft(draft.uuid) else draft
+            val hotDraft = getLatestDraft(draft)
             hotDraft?.also(onUpdate) ?: draft
         }
     }
 
     fun manageDraftAutoSave(draft: Draft, mustSaveThread: Boolean) {
         MailRealm.mailboxContent.writeBlocking {
-            val hotDraft = (if (draft.isManaged()) getLatestDraft(draft.uuid) else draft) ?: return@writeBlocking
-            hotDraft.isModifiedOffline = true
-            hotDraft.date = Date().toRealmInstant()
+            val hotDraft = getLatestDraft(draft) ?: return@writeBlocking
+            hotDraft.apply {
+                isModifiedOffline = true
+                date = Date().toRealmInstant()
+            }
             copyToRealm(hotDraft, UpdatePolicy.ALL)
 
             val draftMessage = Message.from(hotDraft)

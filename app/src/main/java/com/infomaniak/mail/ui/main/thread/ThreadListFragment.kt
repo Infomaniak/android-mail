@@ -37,6 +37,7 @@ import com.infomaniak.lib.core.utils.Utils
 import com.infomaniak.lib.core.utils.loadAvatar
 import com.infomaniak.lib.core.utils.safeNavigate
 import com.infomaniak.lib.core.utils.setPagination
+import com.infomaniak.mail.R
 import com.infomaniak.mail.data.MailData
 import com.infomaniak.mail.data.api.ApiRepository.OFFSET_FIRST_PAGE
 import com.infomaniak.mail.data.api.ApiRepository.PER_PAGE
@@ -49,6 +50,7 @@ import com.infomaniak.mail.ui.main.menu.MenuDrawerFragment
 import com.infomaniak.mail.utils.AccountUtils
 import com.infomaniak.mail.utils.context
 import com.infomaniak.mail.utils.observeNotNull
+import com.infomaniak.mail.utils.openMessageEdition
 
 class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
 
@@ -143,21 +145,19 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
             // onEmptyList = { checkIfNoFiles() }
 
             onThreadClicked = {
-                val destination = if (Folder.isDraftsFolder() && it.messages.isNotEmpty()) {
-                    val message = it.messages.first()
-                    ThreadListFragmentDirections.actionHomeFragmentToNewMessageActivity(
-                        message.draftUuid,
-                        message.draftResource,
-                        message.uid
-                    )
+                if (Folder.isDraftsFolder()) {
+                    if (it.messages.isNotEmpty()) {
+                        openMessageEdition(R.id.action_threadListFragment_to_newMessageActivity, it.messages.first())
+                    }
                 } else {
-                    ThreadListFragmentDirections.actionThreadListFragmentToThreadFragment(
-                        threadUid = it.uid,
-                        threadSubject = it.subject,
-                        threadIsFavorite = it.flagged
+                    safeNavigate(
+                        ThreadListFragmentDirections.actionThreadListFragmentToThreadFragment(
+                            threadUid = it.uid,
+                            threadSubject = it.subject,
+                            threadIsFavorite = it.flagged
+                        )
                     )
                 }
-                safeNavigate(destination)
             }
         }
     }
@@ -183,7 +183,7 @@ class ThreadListFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
         }
 
         newMessageFab.setOnClickListener {
-            safeNavigate(ThreadListFragmentDirections.actionHomeFragmentToNewMessageActivity())
+            safeNavigate(ThreadListFragmentDirections.actionThreadListFragmentToNewMessageActivity())
         }
 
         threadsList.setPagination(

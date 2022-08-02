@@ -18,9 +18,11 @@
 package com.infomaniak.mail.utils
 
 import android.content.Context
+import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.IdRes
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
@@ -30,9 +32,11 @@ import androidx.viewbinding.ViewBinding
 import com.infomaniak.lib.core.utils.SnackbarUtils.showSnackbar
 import com.infomaniak.lib.core.utils.day
 import com.infomaniak.lib.core.utils.month
+import com.infomaniak.lib.core.utils.safeNavigate
 import com.infomaniak.lib.core.utils.year
 import com.infomaniak.mail.R
 import com.infomaniak.mail.data.models.Recipient
+import com.infomaniak.mail.data.models.message.Message
 import io.realm.kotlin.types.RealmInstant
 import java.util.*
 
@@ -92,4 +96,13 @@ fun <T> LiveData<T>.observeOnce(lifecycleOwner: LifecycleOwner, observer: Observ
 
 fun Fragment.notYetImplemented() {
     showSnackbar("This feature is currently under development.")
+}
+
+fun Fragment.openMessageEdition(@IdRes direction: Int, message: Message? = null) {
+    val args = Bundle().apply {
+        putCharSequence("draftUuid", message?.draftUuid)
+        putCharSequence("draftResource", message?.draftResource)
+        putCharSequence("messageUid", message?.uid)
+    }
+    safeNavigate(direction, args)
 }
