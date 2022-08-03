@@ -15,15 +15,9 @@
   ~ You should have received a copy of the GNU General Public License
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/sectionTitle"
-    style="@style/Callout"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/marginStandardSmall"
-    android:layout_marginTop="@dimen/marginStandard"
-    android:layout_marginBottom="@dimen/marginStandardSmall"
-    android:minWidth="120dp"
-    android:textColor="@color/sectionHeaderTextColor"
-    tools:text="Today" />
+<resources>
+
+    <style name="BottomSheetDialogTheme" parent="BottomSheetDialogTheme.Base">
+        <item name="android:navigationBarColor">@color/backgroundColor</item>
+    </style>
+</resources>

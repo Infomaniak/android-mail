@@ -15,15 +15,9 @@
   ~ You should have received a copy of the GNU General Public License
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/sectionTitle"
-    style="@style/Callout"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/marginStandardSmall"
-    android:layout_marginTop="@dimen/marginStandard"
-    android:layout_marginBottom="@dimen/marginStandardSmall"
-    android:minWidth="120dp"
-    android:textColor="@color/sectionHeaderTextColor"
-    tools:text="Today" />
+<View xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="42dp"
+    android:layout_height="@dimen/marginStandardVerySmall"
+    android:layout_gravity="center"
+    android:layout_marginVertical="@dimen/marginStandardMedium"
+    android:background="@drawable/background_bottom_sheet_anchor" />
