@@ -31,7 +31,7 @@ import com.infomaniak.lib.core.utils.startOfTheDay
 import com.infomaniak.lib.core.utils.startOfTheWeek
 import com.infomaniak.lib.core.views.ViewHolder
 import com.infomaniak.mail.R
-import com.infomaniak.mail.data.MailData
+import com.infomaniak.mail.data.models.UiSettings
 import com.infomaniak.mail.data.models.thread.Thread
 import com.infomaniak.mail.data.models.user.UserPreferences.ListDensityMode
 import com.infomaniak.mail.databinding.CardviewThreadItemBinding
@@ -104,12 +104,11 @@ class ThreadListAdapter(private var itemsList: MutableList<Any> = mutableListOf(
 
     private fun CardviewThreadItemBinding.displayThread(position: Int) {
         val thread = itemsList[position] as Thread
-        when (MailData.userPreferencesFlow.value?.getListDensityMode() ?: ListDensityMode.DEFAULT) {
-            ListDensityMode.COMPACT -> displayCompactThread(thread)
-            ListDensityMode.DEFAULT -> displayDefaultThread(thread)
-            ListDensityMode.LARGE -> displayLargeThread(thread)
+        when (UiSettings(context).threadListDensity) {
+            ListDensityMode.COMPACT.modeRes -> displayCompactThread(thread)
+            ListDensityMode.DEFAULT.modeRes -> displayDefaultThread(thread)
+            ListDensityMode.LARGE.modeRes -> displayLargeThread(thread)
         }
-
     }
 
     private fun CardviewThreadItemBinding.displayCompactThread(thread: Thread) = with(thread) {
@@ -125,7 +124,6 @@ class ThreadListAdapter(private var itemsList: MutableList<Any> = mutableListOf(
         if (unseenMessagesCount == 0) setThreadUiRead() else setThreadUiUnread()
 
         root.setOnClickListener { onThreadClicked?.invoke(this) }
-
     }
 
     private fun CardviewThreadItemBinding.displayDefaultThread(thread: Thread) = with(thread) {
@@ -141,7 +139,6 @@ class ThreadListAdapter(private var itemsList: MutableList<Any> = mutableListOf(
         if (unseenMessagesCount == 0) setThreadUiRead() else setThreadUiUnread()
 
         root.setOnClickListener { onThreadClicked?.invoke(this) }
-
     }
 
     private fun CardviewThreadItemBinding.displayLargeThread(thread: Thread) = with(thread) {
@@ -157,7 +154,6 @@ class ThreadListAdapter(private var itemsList: MutableList<Any> = mutableListOf(
         if (unseenMessagesCount == 0) setThreadUiRead() else setThreadUiUnread()
 
         root.setOnClickListener { onThreadClicked?.invoke(this) }
-
     }
 
     private fun CardviewThreadItemBinding.setThreadUiRead() {
