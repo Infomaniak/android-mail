@@ -50,7 +50,7 @@ object ApiRoutes {
     // fun flushFolder(uuid: String, folderId: String) = "${folder(uuid, folderId)}/flush"
 
     fun threads(uuid: String, folderId: String, offset: Int, filter: String?): String {
-        val threadMode = MailData.userPreferencesFlow.value?.getThreadMode()?.setValue ?: ThreadMode.THREADS.setValue
+        val threadMode = MailData.userPreferencesFlow.value?.getThreadMode()?.apiCallValue ?: ThreadMode.THREADS.apiCallValue
         return "${folder(uuid, folderId)}/message?thread=$threadMode&offset=$offset&filter=$filter"
     }
 

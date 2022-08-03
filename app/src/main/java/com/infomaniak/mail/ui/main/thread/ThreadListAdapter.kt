@@ -31,7 +31,7 @@ import com.infomaniak.lib.core.utils.startOfTheDay
 import com.infomaniak.lib.core.utils.startOfTheWeek
 import com.infomaniak.lib.core.views.ViewHolder
 import com.infomaniak.mail.R
-import com.infomaniak.mail.data.models.UiSettings
+import com.infomaniak.mail.data.cache.UserInfosController
 import com.infomaniak.mail.data.models.thread.Thread
 import com.infomaniak.mail.data.models.user.UserPreferences.ListDensityMode
 import com.infomaniak.mail.databinding.CardviewThreadItemBinding
@@ -104,10 +104,10 @@ class ThreadListAdapter(private var itemsList: MutableList<Any> = mutableListOf(
 
     private fun CardviewThreadItemBinding.displayThread(position: Int) {
         val thread = itemsList[position] as Thread
-        when (UiSettings(context).threadListDensity) {
-            ListDensityMode.COMPACT.modeRes -> displayCompactThread(thread)
-            ListDensityMode.DEFAULT.modeRes -> displayDefaultThread(thread)
-            ListDensityMode.LARGE.modeRes -> displayLargeThread(thread)
+        when (UserInfosController.getUserPreferences().threadListDensity) {
+            ListDensityMode.COMPACT.apiName -> displayCompactThread(thread)
+            ListDensityMode.DEFAULT.apiName -> displayDefaultThread(thread)
+            ListDensityMode.LARGE.apiName -> displayLargeThread(thread)
         }
     }
 
